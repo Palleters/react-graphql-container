@@ -1384,9 +1384,9 @@ find-up@^1.0.0, find-up@^1.1.2:
     path-exists "^2.0.0"
     pinkie-promise "^2.0.0"
 
-flow-cli@^0.0.0-pre:
-  version "0.0.0-pre"
-  resolved "https://registry.yarnpkg.com/flow-cli/-/flow-cli-0.0.0-pre.tgz#b9f5bc2b1a17ce5486b01fab3830f52ba3062f8a"
+flow-bin@^0.38.0:
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/flow-bin/-/flow-bin-0.38.0.tgz#3ae096d401c969cc8b5798253fb82381e2d0237a"
 
 flow-copy-source@^1.1.0:
   version "1.1.0"

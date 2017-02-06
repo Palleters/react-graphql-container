@@ -2,10 +2,10 @@
   "name": "react-graphql-container",
   "version": "0.1.0",
   "description": "Higher order component that declaratively provides data to component from GraphQL",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "babel src --ignore __test__ --out-dir ./lib",
-    "copy-flow": "flow-copy-source src lib",
+    "build": "babel src --ignore __test__ --out-dir ./dist",
+    "copy-flow": "flow-copy-source src dist",
     "test": "jest"
   },
   "repository": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Palleter/react-graphql-container#readme",
   "files": [
-    "lib"
+    "dist"
   ],
   "peerDependencies": {
     "react": "^15.0.0"
@@ -35,7 +35,7 @@
     "babel-preset-react": "^6.22.0",
     "babel-preset-stage-0": "^6.22.0",
     "enzyme": "^2.7.1",
-    "flow-cli": "^0.0.0-pre",
+    "flow-bin": "^0.38.0",
     "flow-copy-source": "^1.1.0",
     "jest": "^18.1.0",
     "react": "^15.4.2",
