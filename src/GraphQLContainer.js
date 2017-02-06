@@ -85,7 +85,7 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       const variables = this.buildVariables(subscription.variables, nextProps);
       return this.context.graphQL.client.subscribe(subscription.query, variables, (err, data) => {
         if (subscription.transform) {
-          data = subscription.transform.call(null, this.props, data);
+          data = subscription.transform.call(null, {...this.props, data: this.state}, data);
         }
 
         this.setState({[key]: data});
