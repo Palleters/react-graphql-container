@@ -13,7 +13,7 @@ export type GraphQLSubscription = {
 export type GraphQLContainerOptions = {
   query?: string,
   variables?: (props: Object) => Object,
-  mutations?: {[id: string]: string},
+  mutations?: {[id: string]: string | {|query: string, transform: (props: Object, response: Object) => Object|}},
   subscriptions?: {[id: string]: GraphQLSubscription},
   queries?: Object
 };
@@ -126,8 +126,17 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
 
     runMutations(name: string, variables: Object) {
       const mutation = options.mutations && options.mutations[name];
+
       if (mutation) {
-        return this.runMutation(mutation, variables).then(this.handleResponse);
+        const query = typeof(mutation) === 'string' ? mutation : mutation.query;
+
+        return this.runMutation(query, variables).then(this.handleResponse).then(response => {
+          if (typeof(mutation.transform) === 'function') {
+            const data = mutation.transform.call(null, {...this.props, data: this.state}, response);
+            this.setState(data);
+          }
+          return response;
+        });
       } else {
         return Promise.resolve({});
       }

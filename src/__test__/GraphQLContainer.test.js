@@ -42,6 +42,46 @@ describe('GraphQLContainer', () => {
     }));
   });
 
+  it('passes mutation function as prop', () => {
+    const Component = (props) => (<div data={props.data} />);
+
+    const client = getGraphQL();
+    const Container = GraphQLContainer(props => {
+      return <Component {...props} />;
+    }, {mutations: {
+      testMutation: 'test'
+    }});
+    const component = mount(<Container />, {context: {graphQL: {client}}});
+
+    component.find('Component').props().testMutation('arg');
+
+    expect(client.mutation.mock.calls[0]).toEqual(['test', 'arg']);
+  });
+
+  it('transforms data from mutation response to props', () => {
+    const Component = (props) => (<div data={props.data} />);
+    const client = getGraphQL();
+    const Container = GraphQLContainer(props => (<Component {...props} />), {
+      mutations: {
+        testMutation: {
+          query: 'test',
+          transform: (props, response) => {
+            return {...props.data, ...response};
+          }
+        }
+      }
+    });
+    const component = mount(<Container />, {context: {graphQL: {client}}});
+
+    component.find('Component').props().testMutation({item1: 'item1', item2: 'item2'});
+
+    expect(component.find('div').props()).toEqual(expect.objectContaining({
+      data: expect.objectContaining({
+        item1: 'item1', item2: 'item2'
+      })
+    }));
+  });
+
   describe('when updating component props multiple times', () => {
     describe('when query parameters do not change', () => {
       it('runs graphql query only once', () => {
@@ -156,7 +196,7 @@ describe('GraphQLContainer', () => {
   function getGraphQL() {
     return {
       query: jest.fn(() => SynchronousPromise.resolve({data: {response: 'Test response'}})),
-      mutation: jest.fn(() => SynchronousPromise.resolve({data: {response: 'Test response'}})),
+      mutation: jest.fn((query, data) => SynchronousPromise.resolve({data})),
       subscribe: jest.fn(() => 'id'),
       unsubscribe: jest.fn(() => undefined)
     };
