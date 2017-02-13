@@ -31,8 +31,8 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       graphQL: React.PropTypes.shape({
         client: React.PropTypes.shape({
           query: React.PropTypes.func.isRequired,
-          subscribe: React.PropTypes.func.isRequired,
-          unsubscribe: React.PropTypes.func.isRequired
+          subscribe: React.PropTypes.func,
+          unsubscribe: React.PropTypes.func
         })
       }).isRequired
     };
@@ -87,6 +87,10 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
     }
 
     subscribeWithProps(key: string, subscription: GraphQLSubscription, nextProps: Object) {
+      if (!this.context.graphQL.client.subscribe) {
+        return;
+      }
+
       const variables = this.buildVariables(subscription.variables, nextProps);
       return this.context.graphQL.client.subscribe(subscription.query, variables, (err, data) => {
         if (subscription.transform) {
@@ -98,6 +102,10 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
     }
 
     unsubscribe(id: any) {
+      if (!this.context.graphQL.client.unsubscribe) {
+        return;
+      }
+
       this.context.graphQL.client.unsubscribe(id);
     }
 

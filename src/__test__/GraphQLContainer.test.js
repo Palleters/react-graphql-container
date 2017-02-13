@@ -19,7 +19,6 @@ describe('GraphQLContainer', () => {
 
   it('adds graphql response to container "data" property', () => {
     const client = {
-      ...getGraphQL(),
       query: jest.fn((query, data) => SynchronousPromise.resolve({data: {response: 'Test response'}})),
     };
     const Container = getContainer({query: 'test'});
@@ -161,6 +160,24 @@ describe('GraphQLContainer', () => {
     mount(<Container />, {context: {graphQL: {client}}});
 
     expect(client.subscribe.mock.calls.length).toBe(1);
+  });
+
+  describe('when client does not have subscriptions enabled', () => {
+    it('does not subscribe container', () => {
+      const client = {
+        query: jest.fn((query, data) => SynchronousPromise.resolve({data})),
+      };
+
+      const Container = getContainer({
+        subscriptions: {
+          testSubscription: {query: '', variables: () => ({})}
+        }
+      });
+
+      expect(() => {
+        mount(<Container />, {context: {graphQL: {client}}});
+      }).not.toThrow();
+    });
   });
 
   it('unsubscribes from subscriptions on unmount', () => {
