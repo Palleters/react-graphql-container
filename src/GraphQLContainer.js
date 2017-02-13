@@ -10,12 +10,18 @@ export type GraphQLSubscription = {
   transform?: DataTransformer
 };
 
+type QueryDeclaration = {|query: string, transform?: (props: Object, response: Object) => Object|}
+
+type QueryDeclarations = {
+  [id: string]: string | QueryDeclaration
+};
+
 export type GraphQLContainerOptions = {
   query?: string,
   variables?: (props: Object) => Object,
-  mutations?: {[id: string]: string | {|query: string, transform: (props: Object, response: Object) => Object|}},
+  mutations?: QueryDeclarations,
+  queries?: QueryDeclarations,
   subscriptions?: {[id: string]: GraphQLSubscription},
-  queries?: Object
 };
 
 export default (Container: any, options: GraphQLContainerOptions = {}) => {
@@ -25,7 +31,6 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       graphQL: React.PropTypes.shape({
         client: React.PropTypes.shape({
           query: React.PropTypes.func.isRequired,
-          mutation: React.PropTypes.func.isRequired,
           subscribe: React.PropTypes.func.isRequired,
           unsubscribe: React.PropTypes.func.isRequired
         })
@@ -96,27 +101,13 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       this.context.graphQL.client.unsubscribe(id);
     }
 
-    buildMutations() {
-      if (options.mutations) {
-        const {mutations} = options;
-        return (Object.keys(mutations) || []).reduce((memo, mutation) => {
-          memo[mutation] = function(options) {
-            return this.runMutations(mutation, options);
-          }.bind(this);
-          return memo;
-        }, {});
-      } else {
-        return {};
-      }
-    }
-
-    buildQueries() {
-      const {queries} = options;
+    buildQueries(queries: ?QueryDeclarations) {
       if (queries) {
-        return(Object.keys(queries) || []).reduce((memo, query) => {
-          memo[query] = function(options) {
-            return this.runQueries(query, options);
-          }.bind(this);
+        return(Object.keys(queries) || []).reduce((memo, name) => {
+          if (queries && queries[name]) {
+            const query = this.getQuery(queries[name]);
+            memo[name] = (variables) => this.runQueries(query, variables);
+          }
           return memo;
         }, {});
       } else {
@@ -124,31 +115,20 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       }
     }
 
-    runMutations(name: string, variables: Object) {
-      const mutation = options.mutations && options.mutations[name];
-
-      if (mutation) {
-        const query = typeof(mutation) === 'string' ? mutation : mutation.query;
-
-        return this.runMutation(query, variables).then(this.handleResponse).then(response => {
-          if (typeof(mutation.transform) === 'function') {
-            const data = mutation.transform.call(null, {...this.props, data: this.state}, response);
-            this.setState(data);
-          }
-          return response;
-        });
+    getQuery(query: string | QueryDeclaration): QueryDeclaration {
+      if (typeof(query) === 'string') {
+        return {query};
       } else {
-        return Promise.resolve({});
+        return query;
       }
     }
 
-    runQueries(name: string, variables: Object) {
-      const query = options.queries && options.queries[name];
-      if (query) {
-        return this.runQuery(query, variables).then(this.handleResponse);
-      } else {
-        return Promise.resolve({});
-      }
+    runQueries(queryDeclaration: QueryDeclaration, variables: Object) {
+      const {query, transform} = queryDeclaration;
+
+      return this.runQuery(query, variables).then(this.handleResponse).then(response => {
+        return this.transformResponse(response, transform);
+      });
     }
 
     handleResponse(response: Object) {
@@ -156,6 +136,14 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
         ...response.data,
         ...(response.errors ? {errors: response.errors} : {})
       };
+    }
+
+    transformResponse(response: Object, transform?: (props: Object, response: Object) => Object) {
+      if (transform) {
+        const data = transform.call(null, {...this.props, data: this.state}, response);
+        this.setState(data);
+      }
+      return response;
     }
 
     buildVariables(variableBuilder: ?Function, props: Object) {
@@ -187,16 +175,12 @@ export default (Container: any, options: GraphQLContainerOptions = {}) => {
       return this.context.graphQL.client.query(query, variables);
     }
 
-    runMutation(mutation: ?string, variables: ?Object) {
-      return this.context.graphQL.client.mutation(mutation, variables);
-    }
-
     render() {
       return (
         <Container
           {...this.props}
-          {...this.buildMutations()}
-          {...this.buildQueries()}
+          {...this.buildQueries(options.mutations)}
+          {...this.buildQueries(options.queries)}
           data={this.state}
           />
       );

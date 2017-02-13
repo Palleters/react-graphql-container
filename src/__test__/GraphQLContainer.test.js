@@ -18,7 +18,10 @@ describe('GraphQLContainer', () => {
   });
 
   it('adds graphql response to container "data" property', () => {
-    const client = getGraphQL();
+    const client = {
+      ...getGraphQL(),
+      query: jest.fn((query, data) => SynchronousPromise.resolve({data: {response: 'Test response'}})),
+    };
     const Container = getContainer({query: 'test'});
     const component = mount(<Container data="foo" />, {context: {graphQL: {client}}});
 
@@ -55,7 +58,7 @@ describe('GraphQLContainer', () => {
 
     component.find('Component').props().testMutation('arg');
 
-    expect(client.mutation.mock.calls[0]).toEqual(['test', 'arg']);
+    expect(client.query.mock.calls[0]).toEqual(['test', 'arg']);
   });
 
   it('transforms data from mutation response to props', () => {
@@ -195,8 +198,7 @@ describe('GraphQLContainer', () => {
 
   function getGraphQL() {
     return {
-      query: jest.fn(() => SynchronousPromise.resolve({data: {response: 'Test response'}})),
-      mutation: jest.fn((query, data) => SynchronousPromise.resolve({data})),
+      query: jest.fn((query, data) => SynchronousPromise.resolve({data})),
       subscribe: jest.fn(() => 'id'),
       unsubscribe: jest.fn(() => undefined)
     };

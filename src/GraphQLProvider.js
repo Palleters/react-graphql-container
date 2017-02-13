@@ -5,7 +5,6 @@ export type GraphQLSubscriptionHandler = (errors: Array<Error>, result?: any) =>
 
 export interface GraphQLClient {
   query(query: string, variables?: Object): Promise<*>,
-  mutation(mutation: string, variables?: Object): Promise<*>,
   subscribe(subscription: string, variables?: Object, handler: GraphQLSubscriptionHandler): ?string,
   unsubscribe(id: string): void
 }
