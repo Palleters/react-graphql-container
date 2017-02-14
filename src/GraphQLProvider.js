@@ -15,7 +15,6 @@ export default class GraphQLProvider extends React.Component {
     graphQL: React.PropTypes.shape({
       client: React.PropTypes.shape({
         query: React.PropTypes.func.isRequired,
-        mutation: React.PropTypes.func.isRequired,
         subscribe: React.PropTypes.func,
         unsubscribe: React.PropTypes.func
       })
